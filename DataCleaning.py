@@ -30,7 +30,6 @@ def main():
                      usecols = all_colums, # Define as colunas que serão  utilizadas
                      na_values='?', delimiter=',')      # Define que ? será considerado valores ausentes      
     
-    df_original = df.copy()
     # Imprime as 15 primeiras linhas do arquivo
     print("PRIMEIRAS 15 LINHAS\n")
     print(df.head(15))
@@ -59,40 +58,34 @@ def main():
     # Remove linhas onde o target é NaN
     df = df.dropna(subset=target)
 
-    
-    columns_missing_value = df[features].columns[df[features].isnull().any()]
-    print(columns_missing_value)
-    method = 'mode' # number or median or mean or mode
-    
-    for c in columns_missing_value:
-        UpdateMissingValues(df, c)
-    
-    print(df.describe())
+    #Separa colunas categóricas e numéricas
+    numeric_features = df[features].select_dtypes(include=[np.number]).columns
+    categorical_features = df[features].select_dtypes(exclude=[np.number]).columns
+
+    print("Features Numéricas:\n")
+    print (numeric_features)
     print("\n")
-    print(df.head(15))
-    print(df_original.head(15))
+    print("Features Categóricas:\n")
+    print(categorical_features)
     print("\n")
+
+    # Numéricos: Mediana (robusto contra outliers)
+    for col in numeric_features:
+        median = df[col].median()
+        df[col] = df[col].fillna(median)
+
+    # Categóricos: Moda (mais frequente)
+    for col in categorical_features:
+        mode = df[col].mode()[0]
+        df[col] = df[col].fillna(mode)
+
+    #Imprime a quantidade de valores faltantes após a limpeza
+    print("VALORES FALTANTES APÓS A LIMPEZA\n")   
+    print(df.isnull().sum())
     
     # Salva arquivo com o tratamento para dados faltantes
     df.to_csv(output_file, header=True, index=False)  
     
-def UpdateMissingValues(df, column, method="mode", number=0):
-    if method == 'number':
-        # Substituindo valores ausentes por um número
-        df[column].fillna(number, inplace=True)
-    elif method == 'median':
-        # Substituindo valores ausentes pela mediana 
-        median = df[column].median()
-        df[column].fillna(median, inplace=True)
-    elif method == 'mean':
-        # Substituindo valores ausentes pela média
-        mean = df[column].mean()
-        df[column].fillna(mean, inplace=True)
-    elif method == 'mode':
-        # Substituindo valores ausentes pela moda
-        mode = df[column].mode()[0]
-        df[column].fillna(mode, inplace=True)
-
 
 if __name__ == "__main__":
     main()

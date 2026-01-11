@@ -37,7 +37,6 @@ def main():
     df = pd.read_csv(
         input_file,
         usecols=all_columns,
-        na_values='?',
         delimiter=','
     )
 
